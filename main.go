@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"monkey/evaluator"
+	"monkey/compiler"
 	"monkey/lexer"
-	"monkey/object"
 	"monkey/parser"
 	"monkey/repl"
+	"monkey/vm"
 	"os"
 	"os/user"
 )
@@ -23,13 +23,19 @@ func main() {
 		program := p.ParseProgram()
 		fmt.Println(program.String())
 
-		env := object.NewEnvironment()
-		result := evaluator.Eval(program, env)
-		if result != nil {
-			fmt.Println("=>", result.Inspect())
-		} else {
+		compiler := compiler.New()
+		err := compiler.Compile(program)
+		if err != nil {
 			fmt.Println("=>NIL")
 		}
+
+		machine := vm.New(compiler.Bytecode())
+		err = machine.Run()
+		if err != nil {
+			fmt.Println("=>NIL")
+		}
+		stackTop := machine.StackTop()
+		fmt.Println("=>", stackTop.Inspect())
 	} else {
 		fmt.Printf("Hello %s! This is the monkey programming language!\n",
 			user.Username)
