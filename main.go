@@ -34,8 +34,8 @@ func main() {
 		if err != nil {
 			fmt.Println("=>NIL")
 		}
-		stackTop := machine.StackTop()
-		fmt.Println("=>", stackTop.Inspect())
+		lastPopped := machine.LastPoppedStackElem()
+		fmt.Println("=>", lastPopped.Inspect())
 	} else {
 		fmt.Printf("Hello %s! This is the monkey programming language!\n",
 			user.Username)
