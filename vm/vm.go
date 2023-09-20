@@ -61,6 +61,11 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpMinus, code.OpBang:
+			err := vm.executeUnaryOperation(op)
+			if err != nil {
+				return err
+			}
 		case code.OpPop:
 			vm.pop()
 		case code.OpTrue:
@@ -166,4 +171,37 @@ func nativeBoolToBooleanObject(input bool) *object.Boolean {
 		return True
 	}
 	return False
+}
+
+func (vm *VM) executeUnaryOperation(op code.Opcode) error {
+	operand := vm.pop()
+
+	switch op {
+	case code.OpMinus:
+		return vm.executeUnaryMinusOperation(operand)
+	case code.OpBang:
+		return vm.executeUnaryBangOperation(operand)
+	default:
+		return fmt.Errorf("unknown unary operator: %d", op)
+	}
+}
+
+func (vm *VM) executeUnaryMinusOperation(operand object.Object) error {
+	if operand.Type() != object.INTEGER_OBJ {
+		return fmt.Errorf("unsupported type for negative: %s", operand.Type())
+	}
+
+	value := operand.(*object.Integer).Value
+	return vm.push(&object.Integer{Value: -value})
+}
+
+func (vm *VM) executeUnaryBangOperation(operand object.Object) error {
+	switch operand {
+	case True:
+		return vm.push(False)
+	case False:
+		return vm.push(True)
+	default:
+		return vm.push(False)
+	}
 }
