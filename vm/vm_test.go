@@ -43,6 +43,23 @@ func TestBooleanExpression(t *testing.T) {
 	tests := []vmTestCase{
 		{"true", true},
 		{"false", false},
+		{"1<2", true},
+		{"1>2", false},
+		{"1<1", false},
+		{"1>1", false},
+		{"1==1", true},
+		{"1!=1", false},
+		{"1==2", false},
+		{"1!=2", true},
+		{"true==true", true},
+		{"false==false", true},
+		{"true==false", false},
+		{"true!=false", true},
+		{"false!=true", true},
+		{"(1<2) == true", true},
+		{"(1<2) == false", false},
+		{"(1>2) == true", false},
+		{"(1>2) == false", true},
 	}
 	runVmTests(t, tests)
 }
@@ -66,49 +83,49 @@ func runVmTests(t *testing.T, tests []vmTestCase) {
 		}
 
 		stackElem := vm.LastPoppedStackElem()
-		testExpectedObject(t, tt.expected, stackElem)
+		testExpectedObject(t, tt.input, tt.expected, stackElem)
 	}
 }
 
-func testExpectedObject(t *testing.T, expected interface{}, actual object.Object) {
+func testExpectedObject(t *testing.T, input string, expected interface{}, actual object.Object) {
 	t.Helper()
 
 	switch expected := expected.(type) {
 	case int:
-		err := testIntegerObject(int64(expected), actual)
+		err := testIntegerObject(input, int64(expected), actual)
 		if err != nil {
 			t.Errorf("testIntegerObject failed: %s", err)
 		}
 	case bool:
-		err := testBooleanObject(bool(expected), actual)
+		err := testBooleanObject(input, bool(expected), actual)
 		if err != nil {
 			t.Errorf("testBooleanObject failed: %s", err)
 		}
 	}
 }
 
-func testIntegerObject(expected int64, actual object.Object) error {
+func testIntegerObject(input string, expected int64, actual object.Object) error {
 	result, ok := actual.(*object.Integer)
 	if !ok {
-		return fmt.Errorf("object is not Integer. got=%T (%+v)",
-			actual, actual)
+		return fmt.Errorf("`%s`: object is not Integer. got=%T (%+v)",
+			input, actual, actual)
 	}
 	if result.Value != expected {
-		return fmt.Errorf("object has wrong value. got=%d, want=%d",
-			result.Value, expected)
+		return fmt.Errorf("`%s`: object has wrong value. got=%d, want=%d",
+			input, result.Value, expected)
 	}
 
 	return nil
 }
 
-func testBooleanObject(expected bool, actual object.Object) error {
+func testBooleanObject(input string, expected bool, actual object.Object) error {
 	result, ok := actual.(*object.Boolean)
 	if !ok {
-		return fmt.Errorf("object is not Boolean. got=%T (%+v)", actual, actual)
+		return fmt.Errorf("`%s`: object is not Boolean. got=%T (%+v)", input, actual, actual)
 	}
 
 	if result.Value != expected {
-		return fmt.Errorf("object has wrong value. got=%v, want=%v", result.Value, expected)
+		return fmt.Errorf("`%s`: object has wrong value. got=%v, want=%v", input, result.Value, expected)
 	}
 	return nil
 }
