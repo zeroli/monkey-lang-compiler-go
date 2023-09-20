@@ -34,6 +34,16 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		c.emit(code.OpPop)
+	case *ast.PrefixExpression:
+		err := c.Compile(node.Right)
+		if err != nil {
+			return err
+		}
+		if node.Operator == "-" {
+			c.emit(code.OpMinus)
+		} else {
+			c.emit(code.OpBang)
+		}
 	case *ast.InfixExpression:
 		left := node.Left
 		right := node.Right
