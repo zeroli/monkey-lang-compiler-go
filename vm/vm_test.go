@@ -77,6 +77,15 @@ func TestBooleanExpression(t *testing.T) {
 	runVmTests(t, tests)
 }
 
+func TestStringExpression(t *testing.T) {
+	tests := []vmTestCase{
+		{`"monkey"`, "monkey"},
+		{`"mon" + "key"`, "monkey"},
+		{`"mon" + "key" + "banana"`, "monkeybanana"},
+	}
+	runVmTests(t, tests)
+}
+
 func TestConditions(t *testing.T) {
 	tests := []vmTestCase{
 		{"if (true) { 10 }", 10},
