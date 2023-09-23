@@ -388,7 +388,7 @@ func TestIndexExpression(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input:             `[1,2,3][1+1]`,
-			expectedConstants: []interface{}{1, 2, 3, 1, 1}, // TODO same constant reference?
+			expectedConstants: []interface{}{1, 2, 3, 1, 1}, // FIXME: same constant reference?
 			expectedInstructions: []code.Instructions{
 				code.Make(code.OpConstant, 0),
 				code.Make(code.OpConstant, 1),
