@@ -120,6 +120,29 @@ func TestArrayLiterals(t *testing.T) {
 	runVmTests(t, tests)
 }
 
+func TestHashLiterals(t *testing.T) {
+	tests := []vmTestCase{
+		{
+			"{}", map[object.HashKey]int64{},
+		},
+		{
+			"{1:2, 2:3}",
+			map[object.HashKey]int64{
+				(&object.Integer{Value: 1}).HashKey(): 2,
+				(&object.Integer{Value: 2}).HashKey(): 3,
+			},
+		},
+		{
+			"{1+1: 2 * 2, 3 + 3: 4 * 4}",
+			map[object.HashKey]int64{
+				(&object.Integer{Value: 2}).HashKey(): 4,
+				(&object.Integer{Value: 6}).HashKey(): 16,
+			},
+		},
+	}
+	runVmTests(t, tests)
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 
@@ -163,9 +186,14 @@ func testExpectedObject(t *testing.T, input string, expected interface{}, actual
 			t.Errorf("testStringObject failed: %s", err)
 		}
 	case []int:
-		err := testArrayObject(input, []int(expected), actual)
+		err := testArrayObject(input, expected, actual)
 		if err != nil {
 			t.Errorf("testArrayObject failed: %s", err)
+		}
+	case map[object.HashKey]int64:
+		err := testHashObject(input, expected, actual)
+		if err != nil {
+			t.Errorf("testHashObject failed: %s", err)
 		}
 	case *object.Null:
 		if actual != Null {
@@ -226,6 +254,31 @@ func testArrayObject(input string, expected []int, actual object.Object) error {
 	}
 	for i, expectedElem := range expected {
 		err := testIntegerObject(input+fmt.Sprintf("[%d]", i), int64(expectedElem), result.Elements[i])
+		if err != nil {
+			return fmt.Errorf("testIntegerObject failed: %s", err)
+		}
+	}
+	return nil
+}
+
+func testHashObject(input string, expected map[object.HashKey]int64, actual object.Object) error {
+	hash, ok := actual.(*object.Hash)
+	if !ok {
+		return fmt.Errorf("object is not hash, got=%T (%+v)", actual, actual)
+	}
+
+	if len(hash.Pairs) != len(expected) {
+		return fmt.Errorf("hash has wrong number of pairs. want=%d, got=%d",
+			len(expected), len(hash.Pairs))
+	}
+
+	for expectedKey, expectedValue := range expected {
+		pair, ok := hash.Pairs[expectedKey]
+		if !ok {
+			return fmt.Errorf("no pair for given key in Pairs")
+		}
+
+		err := testIntegerObject(input+fmt.Sprintf("[%v]", expectedKey), expectedValue, pair.Value)
 		if err != nil {
 			return fmt.Errorf("testIntegerObject failed: %s", err)
 		}
