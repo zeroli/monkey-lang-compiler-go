@@ -59,7 +59,7 @@ var definitions = map[Opcode]*Definition{
 	OpSetGlobal:     {"OpSetGlobal", []int{2}},
 	OpGetGlobal:     {"OpGetGlobal", []int{2}},
 	OpArray:         {"OpArray", []int{2}}, // argument: the number of elements to make an array
-	OpHash:          {"OpHash", []int{2}},  // argument: the nubmer of element pairs to make a hash
+	OpHash:          {"OpHash", []int{2}},  // argument: the twice number of element pairs to make a hash
 	OpIndex:         {"OpIndex", []int{}},
 }
 
