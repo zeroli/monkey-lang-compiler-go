@@ -111,6 +111,15 @@ func TestGlobalLetStatements(t *testing.T) {
 	runVmTests(t, tests)
 }
 
+func TestArrayLiterals(t *testing.T) {
+	tests := []vmTestCase{
+		{`[]`, []int{}},
+		{`[1,2,3]`, []int{1, 2, 3}},
+		{`[1+3, 3*4, 5+6]`, []int{4, 12, 11}},
+	}
+	runVmTests(t, tests)
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 
@@ -148,10 +157,22 @@ func testExpectedObject(t *testing.T, input string, expected interface{}, actual
 		if err != nil {
 			t.Errorf("testBooleanObject failed: %s", err)
 		}
+	case string:
+		err := testStringObject(input, string(expected), actual)
+		if err != nil {
+			t.Errorf("testStringObject failed: %s", err)
+		}
+	case []int:
+		err := testArrayObject(input, []int(expected), actual)
+		if err != nil {
+			t.Errorf("testArrayObject failed: %s", err)
+		}
 	case *object.Null:
 		if actual != Null {
 			t.Errorf("object is not Null: %T (%+v)", actual, actual)
 		}
+	default:
+		t.Errorf("unknown object type: got=%T, want=%T", actual, expected)
 	}
 }
 
@@ -177,6 +198,37 @@ func testBooleanObject(input string, expected bool, actual object.Object) error 
 
 	if result.Value != expected {
 		return fmt.Errorf("`%s`: object has wrong value. got=%v, want=%v", input, result.Value, expected)
+	}
+	return nil
+}
+
+func testStringObject(input string, expected string, actual object.Object) error {
+	result, ok := actual.(*object.String)
+	if !ok {
+		return fmt.Errorf("`%s`: object is not string. got=%T (%+v)", input, actual, actual)
+	}
+
+	if result.Value != expected {
+		return fmt.Errorf("`%s`: object has wrong value. got=%v, want=%v", input, result.Value, expected)
+	}
+	return nil
+}
+
+func testArrayObject(input string, expected []int, actual object.Object) error {
+	result, ok := actual.(*object.Array)
+	if !ok {
+		return fmt.Errorf("`%s`: object is not array. got=%T (%+v)", input, actual, actual)
+	}
+
+	if len(result.Elements) != len(expected) {
+		return fmt.Errorf("wrong number of elements: want=%d, got=%d",
+			len(expected), len(result.Elements))
+	}
+	for i, expectedElem := range expected {
+		err := testIntegerObject(input+fmt.Sprintf("[%d]", i), int64(expectedElem), result.Elements[i])
+		if err != nil {
+			return fmt.Errorf("testIntegerObject failed: %s", err)
+		}
 	}
 	return nil
 }
