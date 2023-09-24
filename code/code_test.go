@@ -29,6 +29,9 @@ func TestMake(t *testing.T) {
 		{OpArray, []int{1}, []byte{byte(OpArray), 0, 1}},
 		{OpHash, []int{10}, []byte{byte(OpHash), 0, 10}},
 		{OpIndex, []int{}, []byte{byte(OpIndex)}},
+		{OpCall, []int{}, []byte{byte(OpCall)}},
+		{OpReturnValue, []int{}, []byte{byte(OpReturnValue)}},
+		{OpReturn, []int{}, []byte{byte(OpReturn)}},
 	}
 
 	for _, tt := range tests {
@@ -72,6 +75,9 @@ func TestInstructionString(t *testing.T) {
 		Make(OpArray, 100),
 		Make(OpHash, 3000),
 		Make(OpIndex),
+		Make(OpCall),
+		Make(OpReturnValue),
+		Make(OpReturn),
 	}
 
 	expected := `0000 OpAdd
@@ -96,6 +102,9 @@ func TestInstructionString(t *testing.T) {
 0031 OpArray 100
 0034 OpHash 3000
 0037 OpIndex
+0038 OpCall
+0039 OpReturnValue
+0040 OpReturn
 `
 
 	concatted := Instructions{}
