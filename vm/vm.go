@@ -84,10 +84,12 @@ func (vm *VM) Run() error {
 		ins = vm.currentFrame().Instructions()
 		op = code.Opcode(ins[ip])
 
+		vm.updateIp(ip)
+
 		switch op {
 		case code.OpConstant:
 			constIndex := code.ReadUint16(ins[ip+1:])
-			ip += 2
+			vm.updateIp(ip + 2)
 			err := vm.push(vm.constants[constIndex])
 			if err != nil {
 				return err
@@ -121,13 +123,14 @@ func (vm *VM) Run() error {
 			}
 		case code.OpJump:
 			pos := int(code.ReadUint16(ins[ip+1:]))
-			ip = pos - 1 // next, `ip++`
+			vm.updateIp(pos - 1)
 		case code.OpJumpNotTruthy:
 			pos := int(code.ReadUint16(ins[ip+1:]))
-			ip += 2 // skip over 2 bytes for argument
 			condition := vm.pop()
 			if !isTruthy(condition) {
-				ip = pos - 1 // next, `ip++`
+				vm.updateIp(pos - 1) // next instruction
+			} else {
+				vm.updateIp(ip + 2) // skip over 2 bytes for argument
 			}
 		case code.OpNull:
 			err := vm.push(Null)
@@ -136,19 +139,19 @@ func (vm *VM) Run() error {
 			}
 		case code.OpSetGlobal:
 			globalIndex := code.ReadUint16(ins[ip+1:])
-			ip += 2
+			vm.updateIp(ip + 2) // skip over 2 bytes for argument
 
 			vm.globals[globalIndex] = vm.pop()
 		case code.OpGetGlobal:
 			globalIndex := code.ReadUint16(ins[ip+1:])
-			ip += 2
+			vm.updateIp(ip + 2) // skip over 2 bytes for argument
 			err := vm.push(vm.globals[globalIndex])
 			if err != nil {
 				return err
 			}
 		case code.OpArray:
 			numElements := int(code.ReadUint16(ins[ip+1:]))
-			ip += 2
+			vm.updateIp(ip + 2) // skip over 2 bytes for argument
 
 			array := vm.buildArray(vm.sp-numElements, vm.sp)
 			vm.sp -= numElements
@@ -158,7 +161,7 @@ func (vm *VM) Run() error {
 			}
 		case code.OpHash:
 			numElements := int(code.ReadUint16(ins[ip+1:]))
-			ip += 2
+			vm.updateIp(ip + 2) // skip over 2 bytes for argument
 
 			hash, err := vm.buildHash(vm.sp-numElements, vm.sp)
 			if err != nil {
@@ -177,9 +180,22 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpCall:
+			fn, ok := vm.stack[vm.sp-1].(*object.CompiledFunction)
+			if !ok {
+				return fmt.Errorf("calling non-function")
+			}
+			frame := NewFrame(fn)
+			vm.pushFrame(frame)
+		case code.OpReturnValue:
+			returnValue := vm.pop()
+			vm.popFrame()
+			vm.pop() // pop compiledFunction off the stack
+			err := vm.push(returnValue)
+			if err != nil {
+				return err
+			}
 		} // end of switch/case
-		ip++
-		vm.currentFrame().ip = ip
 	} // end of for loop
 	return nil
 }
@@ -198,6 +214,11 @@ func (vm *VM) pop() object.Object {
 	o := vm.stack[vm.sp-1]
 	vm.sp--
 	return o
+}
+
+func (vm *VM) updateIp(ip int) {
+	ip++
+	vm.currentFrame().ip = ip
 }
 
 func (vm *VM) executeBinaryOperation(op code.Opcode) error {
