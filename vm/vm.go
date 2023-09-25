@@ -195,6 +195,13 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpReturn:
+			vm.popFrame()
+			vm.pop() // pop compiledFunction off the stack
+			err := vm.push(Null)
+			if err != nil {
+				return err
+			}
 		} // end of switch/case
 	} // end of for loop
 	return nil
