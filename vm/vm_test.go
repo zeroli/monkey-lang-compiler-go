@@ -401,6 +401,34 @@ func TestCallingFunctionsWithWrongArguments(t *testing.T) {
 	}
 }
 
+func TestBuiltinFunctions(t *testing.T) {
+	tests := []vmTestCase{
+		{`len("")`, 0},
+		{`len("four")`, 4},
+		{`len("hello world")`, 11},
+		{`len(1)`,
+			&object.Error{
+				Message: "argument to `len` not supported, got INTEGER",
+			},
+		},
+		{`len("one", "two")`,
+			&object.Error{
+				Message: "wrong number of arguments, got=2, want=1",
+			},
+		},
+		{`len([1,2,3])`, 3},
+		{`len([])`, 0},
+		{`puts("hello", "world")`, Null},
+		{`push([], 1)`, []int{1}},
+		{`push(1, 1)`,
+			&object.Error{
+				Message: "argument to `push` must be ARRAY, got INTEGER",
+			},
+		},
+	}
+	runVmTests(t, tests)
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 
@@ -456,6 +484,15 @@ func testExpectedObject(t *testing.T, input string, expected interface{}, actual
 	case *object.Null:
 		if actual != Null {
 			t.Errorf("object is not Null: %T (%+v)", actual, actual)
+		}
+	case *object.Error:
+		errObj, ok := actual.(*object.Error)
+		if !ok {
+			t.Errorf("object is not Error: %T (%+v)", actual, actual)
+		}
+		if errObj.Message != expected.Message {
+			t.Errorf("wrong error message. expected=%q, got=%q",
+				expected.Message, errObj.Message)
 		}
 	default:
 		t.Errorf("unknown object type: got=%T, want=%T", actual, expected)

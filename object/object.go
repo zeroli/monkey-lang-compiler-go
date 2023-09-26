@@ -12,10 +12,10 @@ import (
 type ObjectType string
 
 const (
-	INTEGER_OBJ           = "Integer"
-	BOOLEAN_OBJ           = "Boolean"
-	NULL_OBJ              = "Null"
-	STRING_OBJ            = "String"
+	INTEGER_OBJ           = "INTEGER"
+	BOOLEAN_OBJ           = "BOOLEAN"
+	NULL_OBJ              = "NULL"
+	STRING_OBJ            = "STRING"
 	RETURN_VALUE_OBJ      = "RETURN_VALUE"
 	ERROR_OBJ             = "ERROR"
 	FUNCTION_OBJ          = "FUNCTION"
