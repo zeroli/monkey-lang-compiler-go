@@ -28,7 +28,7 @@ type VM struct {
 
 func New(bytecode *compiler.Bytecode) *VM {
 	mainFn := &object.CompiledFunction{Instructions: bytecode.Instructions}
-	mainFrame := NewFrame(mainFn)
+	mainFrame := NewFrame(mainFn, 0)
 	frames := make([]*Frame, MaxFrames)
 	frames[0] = mainFrame
 
@@ -149,6 +149,18 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpSetLocal:
+			localIndex := int(code.ReadUint8(ins[ip+1:]))
+			vm.updateIp(ip + 1) // skip over 1 byte for argument
+
+			vm.stack[localIndex+vm.currentFrame().bp] = vm.pop()
+		case code.OpGetLocal:
+			localIndex := int(code.ReadUint8(ins[ip+1:]))
+			vm.updateIp(ip + 1) // skip over 1 byte for argument
+			err := vm.push(vm.stack[localIndex+vm.currentFrame().bp])
+			if err != nil {
+				return err
+			}
 		case code.OpArray:
 			numElements := int(code.ReadUint16(ins[ip+1:]))
 			vm.updateIp(ip + 2) // skip over 2 bytes for argument
@@ -185,19 +197,20 @@ func (vm *VM) Run() error {
 			if !ok {
 				return fmt.Errorf("calling non-function")
 			}
-			frame := NewFrame(fn)
+			frame := NewFrame(fn, vm.sp)
 			vm.pushFrame(frame)
+			vm.sp += fn.NumLocals
 		case code.OpReturnValue:
 			returnValue := vm.pop()
-			vm.popFrame()
-			vm.pop() // pop compiledFunction off the stack
+			frame := vm.popFrame()
+			vm.sp = frame.bp - 1 // -1 for compiled function pop off
 			err := vm.push(returnValue)
 			if err != nil {
 				return err
 			}
 		case code.OpReturn:
-			vm.popFrame()
-			vm.pop() // pop compiledFunction off the stack
+			frame := vm.popFrame()
+			vm.sp = frame.bp - 1 // -1 for compiled function pop off
 			err := vm.push(Null)
 			if err != nil {
 				return err
