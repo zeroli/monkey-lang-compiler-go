@@ -22,6 +22,10 @@ func Start(in io.Reader, out io.Writer) {
 	// symbol table is a map actually
 	symbolTable := compiler.NewSymbolTable()
 
+	for i, v := range object.Builtins {
+		symbolTable.DefineBuiltin(i, v.Name)
+	}
+
 	for {
 		fmt.Print(PROMPT)
 
