@@ -2,11 +2,10 @@ package object
 
 import (
 	"fmt"
-	"monkey/object"
 )
 
 func newError(format string, a ...interface{}) *Error {
-	return &object.Error{Message: fmt.Sprintf(format, a...)}
+	return &Error{Message: fmt.Sprintf(format, a...)}
 }
 
 var Builtins = []struct {
@@ -72,4 +71,5 @@ func GetBuiltinByName(name string) *Builtin {
 			return def.Builtin
 		}
 	}
+	return nil
 }
