@@ -32,6 +32,8 @@ func TestMake(t *testing.T) {
 		{OpCall, []int{}, []byte{byte(OpCall)}},
 		{OpReturnValue, []int{}, []byte{byte(OpReturnValue)}},
 		{OpReturn, []int{}, []byte{byte(OpReturn)}},
+		{OpGetLocal, []int{200}, []byte{byte(OpGetLocal), 200}},
+		{OpSetLocal, []int{210}, []byte{byte(OpSetLocal), 210}},
 	}
 
 	for _, tt := range tests {
@@ -78,6 +80,8 @@ func TestInstructionString(t *testing.T) {
 		Make(OpCall),
 		Make(OpReturnValue),
 		Make(OpReturn),
+		Make(OpGetLocal, 10),
+		Make(OpSetLocal, 20),
 	}
 
 	expected := `0000 OpAdd
@@ -105,6 +109,8 @@ func TestInstructionString(t *testing.T) {
 0038 OpCall
 0039 OpReturnValue
 0040 OpReturn
+0041 OpGetLocal 10
+0043 OpSetLocal 20
 `
 
 	concatted := Instructions{}
@@ -125,6 +131,8 @@ func TestReadOperands(t *testing.T) {
 		byteRead int
 	}{
 		{OpConstant, []int{65535}, 2},
+		{OpGetLocal, []int{200}, 1},
+		{OpSetLocal, []int{210}, 1},
 	}
 
 	for _, tt := range tests {
