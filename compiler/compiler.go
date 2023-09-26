@@ -281,7 +281,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if err != nil {
 			return err
 		}
-		c.emit(code.OpCall)
+		c.emit(code.OpCall, len(node.Arguments))
 	}
 	return nil
 }
