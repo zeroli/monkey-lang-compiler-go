@@ -66,7 +66,7 @@ var definitions = map[Opcode]*Definition{
 	OpArray:         {"OpArray", []int{2}}, // argument: the number of elements to make an array
 	OpHash:          {"OpHash", []int{2}},  // argument: the twice number of element pairs to make a hash
 	OpIndex:         {"OpIndex", []int{}},
-	OpCall:          {"OpCall", []int{}},
+	OpCall:          {"OpCall", []int{1}}, // argument: the number of arguments on top of callable function
 	OpReturnValue:   {"OpReturnValue", []int{}},
 	OpReturn:        {"OpReturn", []int{}},
 	OpGetLocal:      {"OpGetLocal", []int{1}},

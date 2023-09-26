@@ -29,7 +29,7 @@ func TestMake(t *testing.T) {
 		{OpArray, []int{1}, []byte{byte(OpArray), 0, 1}},
 		{OpHash, []int{10}, []byte{byte(OpHash), 0, 10}},
 		{OpIndex, []int{}, []byte{byte(OpIndex)}},
-		{OpCall, []int{}, []byte{byte(OpCall)}},
+		{OpCall, []int{10}, []byte{byte(OpCall), 10}},
 		{OpReturnValue, []int{}, []byte{byte(OpReturnValue)}},
 		{OpReturn, []int{}, []byte{byte(OpReturn)}},
 		{OpGetLocal, []int{200}, []byte{byte(OpGetLocal), 200}},
@@ -77,7 +77,7 @@ func TestInstructionString(t *testing.T) {
 		Make(OpArray, 100),
 		Make(OpHash, 3000),
 		Make(OpIndex),
-		Make(OpCall),
+		Make(OpCall, 255),
 		Make(OpReturnValue),
 		Make(OpReturn),
 		Make(OpGetLocal, 10),
@@ -106,11 +106,11 @@ func TestInstructionString(t *testing.T) {
 0031 OpArray 100
 0034 OpHash 3000
 0037 OpIndex
-0038 OpCall
-0039 OpReturnValue
-0040 OpReturn
-0041 OpGetLocal 10
-0043 OpSetLocal 20
+0038 OpCall 255
+0040 OpReturnValue
+0041 OpReturn
+0042 OpGetLocal 10
+0044 OpSetLocal 20
 `
 
 	concatted := Instructions{}
