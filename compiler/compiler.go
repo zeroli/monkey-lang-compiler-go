@@ -253,6 +253,12 @@ func (c *Compiler) Compile(node ast.Node) error {
 		c.emit(code.OpIndex)
 	case *ast.FunctionLiteral:
 		c.enterScope()
+
+		// put arguments into local bindings
+		for _, p := range node.Parameters {
+			c.symbolTable.Define(p.Value)
+		}
+
 		err := c.Compile(node.Body)
 		if err != nil {
 			return err
