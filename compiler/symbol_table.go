@@ -6,6 +6,7 @@ const (
 	GlobalScope  SymbolScope = "GLOBAL"
 	LocalScope   SymbolScope = "LOCAL"
 	BuiltinScope SymbolScope = "BUILTIN"
+	FreeScope    SymbolScope = "FREE"
 )
 
 type Symbol struct {
@@ -18,21 +19,21 @@ type SymbolTable struct {
 	Outer          *SymbolTable
 	store          map[string]Symbol
 	numDefinitions int
+	FreeSymbols    []Symbol
 }
 
 func NewSymbolTable() *SymbolTable {
 	return &SymbolTable{
 		store:          make(map[string]Symbol),
 		numDefinitions: 0,
+		FreeSymbols:    []Symbol{},
 	}
 }
 
 func NewEnclosedSymbolTable(outer *SymbolTable) *SymbolTable {
-	return &SymbolTable{
-		Outer:          outer,
-		store:          make(map[string]Symbol),
-		numDefinitions: 0,
-	}
+	st := NewSymbolTable()
+	st.Outer = outer
+	return st
 }
 
 func (st *SymbolTable) Define(name string) Symbol {
@@ -56,10 +57,29 @@ func (st *SymbolTable) DefineBuiltin(index int, name string) Symbol {
 	return symbol
 }
 
+func (st *SymbolTable) DefineFree(original Symbol) Symbol {
+	st.FreeSymbols = append(st.FreeSymbols, original)
+
+	symbol := Symbol{Name: original.Name, Index: len(st.FreeSymbols) - 1}
+	symbol.Scope = FreeScope
+	st.store[original.Name] = symbol
+	return symbol
+}
+
 func (st *SymbolTable) Resolve(name string) (Symbol, bool) {
-	s, ok := st.store[name]
+	obj, ok := st.store[name]
 	if !ok && st.Outer != nil {
-		s, ok = st.Outer.Resolve(name)
+		obj, ok = st.Outer.Resolve(name)
+		if !ok {
+			return obj, ok
+		}
+
+		if obj.Scope == GlobalScope || obj.Scope == BuiltinScope {
+			return obj, ok
+		}
+		// find it in enclosing scope, transfer it to free variable
+		free := st.DefineFree(obj)
+		return free, true
 	}
-	return s, ok
+	return obj, ok
 }

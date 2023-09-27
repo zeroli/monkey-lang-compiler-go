@@ -542,6 +542,18 @@ func TestFunctions(t *testing.T) {
 				code.Make(code.OpPop),
 			},
 		},
+		{
+			input: `fn(a, b) { }`,
+			expectedConstants: []interface{}{
+				[]code.Instructions{
+					code.Make(code.OpReturn),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpClosure, 0, 0),
+				code.Make(code.OpPop),
+			},
+		},
 	}
 	runCompilerTests(t, tests)
 }
@@ -812,6 +824,74 @@ func TestFunctionReturnFunction(t *testing.T) {
 				code.Make(code.OpSetGlobal, 1),
 				code.Make(code.OpGetGlobal, 1),
 				code.Make(code.OpCall, 0),
+				code.Make(code.OpPop),
+			},
+		},
+	}
+	runCompilerTests(t, tests)
+}
+
+func TestClosure(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+			fn(a) {
+				fn(b) {
+					a + b
+				}
+			}
+			`,
+			expectedConstants: []interface{}{
+				[]code.Instructions{
+					code.Make(code.OpGetFree, 0),  // `a` is free variable
+					code.Make(code.OpGetLocal, 0), // `b`
+					code.Make(code.OpAdd),
+					code.Make(code.OpReturnValue),
+				},
+				[]code.Instructions{
+					code.Make(code.OpGetLocal, 0),   // local `a` into free variable
+					code.Make(code.OpClosure, 0, 1), // compiled function `fn(b) {...}` is at index of 0 in constant pool
+					code.Make(code.OpReturnValue),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpClosure, 1, 0), // 1 for `fn(a)` index in constant pool, 0 for free variable#
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+			fn(a) {
+				fn(b) {
+					fn(c) {
+						a + b +c
+					}
+				}
+			};
+			`,
+			expectedConstants: []interface{}{
+				[]code.Instructions{ // fn(c): 0
+					code.Make(code.OpGetFree, 0),
+					code.Make(code.OpGetFree, 1),
+					code.Make(code.OpAdd),
+					code.Make(code.OpGetLocal, 0),
+					code.Make(code.OpAdd),
+					code.Make(code.OpReturnValue),
+				},
+				[]code.Instructions{ // fn(b): 1
+					code.Make(code.OpGetFree, 0),    // free 0 for `a`
+					code.Make(code.OpGetLocal, 0),   // local 0 for `b`
+					code.Make(code.OpClosure, 0, 2), // 2: `a`, `b`
+					code.Make(code.OpReturnValue),
+				},
+				[]code.Instructions{ // fn(a): 2
+					code.Make(code.OpGetLocal, 0), // local 0 to free variable
+					code.Make(code.OpClosure, 1, 1),
+					code.Make(code.OpReturnValue),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpClosure, 2, 0), // fn(a)
 				code.Make(code.OpPop),
 			},
 		},
