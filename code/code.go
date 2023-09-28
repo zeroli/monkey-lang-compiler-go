@@ -78,9 +78,9 @@ var definitions = map[Opcode]*Definition{
 	OpGetBuiltin:    {"OpGetBuiltin", []int{1}},
 	// 1st argument: the index of compiled function in constant pool
 	// 2nd argument: how many of free variables on stack
-	OpClosure: {"OpClosure", []int{2, 1}},
-	OpGetFree: {"OpGetFree", []int{1}}, // argument: # of free variables on stack
-	OpCurrentClosure, {"OpCurrentClosure", []int{}},
+	OpClosure:        {"OpClosure", []int{2, 1}},
+	OpGetFree:        {"OpGetFree", []int{1}}, // argument: # of free variables on stack
+	OpCurrentClosure: {"OpCurrentClosure", []int{}},
 }
 
 func Lookup(op byte) (*Definition, error) {

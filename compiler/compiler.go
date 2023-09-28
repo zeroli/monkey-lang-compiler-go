@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"bytes"
 	"fmt"
 	"monkey/ast"
 	"monkey/code"
@@ -104,11 +105,12 @@ func (c *Compiler) Compile(node ast.Node) error {
 			}
 		}
 	case *ast.LetStatement:
+		symbol := c.symbolTable.Define(node.Name.Value)
 		err := c.Compile(node.Value)
 		if err != nil {
 			return err
 		}
-		symbol := c.symbolTable.Define(node.Name.Value)
+
 		if symbol.Scope == GlobalScope {
 			c.emit(code.OpSetGlobal, symbol.Index)
 		} else {
@@ -256,6 +258,10 @@ func (c *Compiler) Compile(node ast.Node) error {
 	case *ast.FunctionLiteral:
 		c.enterScope()
 
+		if node.Name != "" {
+			c.symbolTable.DefineFunctionName(node.Name)
+		}
+
 		// put arguments into local bindings
 		for _, p := range node.Parameters {
 			c.symbolTable.Define(p.Value)
@@ -396,10 +402,31 @@ func (c *Compiler) loadSymbol(s Symbol) {
 		c.emit(code.OpGetBuiltin, s.Index)
 	case FreeScope:
 		c.emit(code.OpGetFree, s.Index)
+	case FunctionScope:
+		c.emit(code.OpCurrentClosure)
 	}
 }
 
 type Bytecode struct {
 	Instructions code.Instructions
 	Constants    []object.Object
+}
+
+func (b *Bytecode) String() string {
+	var out bytes.Buffer
+
+	for i, c := range b.Constants {
+		switch c := c.(type) {
+		case *object.CompiledFunction:
+			out.WriteString(fmt.Sprintf("constant %d: %T\n%s\n", i, c, c.Instructions))
+		case *object.Integer:
+			out.WriteString(fmt.Sprintf("constant %d: %T %d\n", i, c, c.Value))
+		case *object.String:
+			out.WriteString(fmt.Sprintf("constant %d: %T %s\n", i, c, c.Value))
+		case *object.Boolean:
+			out.WriteString(fmt.Sprintf("constant %d: %T %v\n", i, c, c.Value))
+		}
+	}
+	out.WriteString(b.Instructions.String())
+	return out.String()
 }
